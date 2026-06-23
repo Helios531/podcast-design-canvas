@@ -34,6 +34,8 @@ Useful views include:
 
 Each view should link back to the relevant episode moment or product surface.
 
+Review-copy organization should stay tied to `docs/client-review-copy-flow.md`, so teams can move from a workspace view into the exact review round, approver list, and episode moment that still needs a decision.
+
 ## Creator Controls
 
 Organizing a workspace should follow podcast production, not generic file management. A team should be able to:

@@ -75,6 +75,8 @@ For teams producing client shows, the flow should preserve:
 
 This information supports repeatable production without making a solo creator do extra project management.
 
+When teams manage multiple shows or clients, ownership and reviewer context for each review copy should stay scoped through `docs/team-workspace-organization.md` rather than a generic shared inbox. The review copy should clearly show which show or client workspace owns the round before anyone reuses templates, assets, or guest context across productions.
+
 ## Maintainer Acceptance Notes
 
 Accept work that helps teams review long-form podcast episodes before final export. Close work that turns review into a generic task board, requires project-management overhead for solo creators, or treats review copies as final publish files.
