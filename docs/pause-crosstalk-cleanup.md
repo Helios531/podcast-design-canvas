@@ -11,11 +11,14 @@ A creator should be able to review awkward pauses, false starts, and heavy cross
 Cleanup review should start from episode context already in the workspace:
 
 - speaker sync and track alignment from episode ingest
+- baseline noise, loudness, and clarity cleanup from `docs/audio-cleanup-controls.md`
 - caption confidence gaps in `docs/audio-caption-quality-review.md`
 - pacing trim suggestions in `docs/preset-pacing-controls.md`
 - transcript search for surrounding context in `docs/transcript-search-navigation.md`
 
 Cleanup issues that would affect the chosen export destination should surface in `docs/export-readiness-review.md` Audio Cleanup Warnings.
+
+Broad cleanup choices such as noise reduction, loudness balancing, or speech clarity should stay in `docs/audio-cleanup-controls.md`. This review should focus on whether a specific pause or overlap needs creator attention in context.
 
 ## Detected Moments
 

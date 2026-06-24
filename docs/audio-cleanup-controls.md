@@ -10,6 +10,8 @@ A creator should be able to reduce noise, balance levels, and improve speech cla
 
 Audio cleanup is the creator-facing quality layer that feeds `docs/audio-caption-quality-review.md`. Cleanup sets how the episode sounds; caption confidence, caption styling, and transcript accuracy stay in that review. Music cues stay in `docs/music-cue-setup.md`, speech ducking in `docs/music-ducking-under-speech.md`, and pause or cross-talk edits in `docs/pause-crosstalk-cleanup.md`.
 
+When the problem is not general sound quality but a specific conversational moment, such as dead air, interruption, or overlapping speech, cleanup should hand that moment to `docs/pause-crosstalk-cleanup.md` instead of trying to solve it with broad noise or loudness controls.
+
 ## Cleanup Controls
 
 Use plain-language quality choices, not decibel or filter settings:
