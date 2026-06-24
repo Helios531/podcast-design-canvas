@@ -25,6 +25,7 @@ const setupScreens = [
   "guest-profile-reuse.html",
   "speaker-visual-match.html",
   "speaker-eye-line-coherence.html",
+  "off-camera-speaker-presence.html",
 ];
 
 for (const file of setupScreens) {
@@ -44,6 +45,10 @@ function createElement(tagName) {
     id: "",
     target: "",
     textContent: "",
+    getAttribute(name) {
+      if (name === "href") return this.href;
+      return this.attributes[name] || "";
+    },
     setAttribute(name, value) {
       this.attributes[name] = value;
       if (name === "id") this.id = value;
@@ -115,6 +120,78 @@ function linkWithText(nodes, text) {
   return link;
 }
 
+function normalizeSetupHrefFor(href, search = "", embedded = false) {
+  const link = createElement("a");
+  link.href = href;
+  const window = makeWindow("speaker-attribution-review.html", embedded, search);
+  const rootNode = {
+    querySelectorAll(selector) {
+      return selector === "a[href]" ? [link] : [];
+    },
+  };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+    rootNode,
+  };
+  vm.runInNewContext(
+    `${navScript}\nnormalizeSetupScreenLinks(rootNode);\nglobalThis.result = { href: rootNode.querySelectorAll("a[href]")[0].href, target: rootNode.querySelectorAll("a[href]")[0].target };`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+function normalizeSetupClickFor(href, search = "", embedded = false) {
+  const link = createElement("a");
+  link.href = href;
+  link.closest = (selector) => (selector === "a[href]" ? link : null);
+  const window = makeWindow("speaker-attribution-review.html", embedded, search);
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+    link,
+  };
+  vm.runInNewContext(
+    `${navScript}\nnormalizeSetupLinkClick({ target: link });\nglobalThis.result = { href: link.href, target: link.target };`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+const standaloneRoleLink = normalizeSetupHrefFor("speaker-role-mapping.html", "?path=episode");
+assert.equal(
+  standaloneRoleLink.href,
+  "speaker-role-mapping.html?path=episode",
+  "speaker setup nav preserves episode context on in-page speaker role links",
+);
+assert.equal(standaloneRoleLink.target, "", "standalone speaker role link does not force a top target");
+
+const embeddedRoleLink = normalizeSetupHrefFor("speaker-role-mapping.html", "?path=episode", true);
+assert.equal(
+  embeddedRoleLink.href,
+  "../preview/app.html#speaker-role-mapping?path=episode",
+  "embedded speaker setup nav routes in-page speaker role links through the preview app",
+);
+assert.equal(embeddedRoleLink.target, "_top", "embedded speaker role link targets the parent app");
+
+const syncRepairLink = normalizeSetupHrefFor("speaker-sync-repair.html", "?path=episode", true);
+assert.equal(
+  syncRepairLink.href,
+  "speaker-sync-repair.html",
+  "speaker setup nav leaves non-setup in-page fix links unchanged",
+);
+assert.equal(syncRepairLink.target, "", "speaker setup nav does not retarget non-setup fix links");
+
+const dynamicRoleLink = normalizeSetupClickFor("speaker-role-mapping.html", "?path=episode", true);
+assert.equal(
+  dynamicRoleLink.href,
+  "../preview/app.html#speaker-role-mapping?path=episode",
+  "speaker setup nav normalizes dynamically rendered setup links before navigation",
+);
+assert.equal(dynamicRoleLink.target, "_top", "dynamic embedded setup links target the parent app");
+
 const firstNav = renderNavFor("speaker-attribution-review.html", "speaker-attribution-review");
 assert.equal(
   linkWithText(firstNav.nodes, "Previous: Speaker roles").href,
@@ -127,7 +204,13 @@ assert.equal(
   "first speaker setup screen links to the next setup step",
 );
 
-const lastNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence");
+const eyeLineNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence");
+assert.ok(
+  eyeLineNav.nodes.some((node) => node.textContent === "Next: Off-camera speaker presence"),
+  "eye-line coherence screen links to off-camera speaker presence",
+);
+
+const lastNav = renderNavFor("off-camera-speaker-presence.html", "off-camera-speaker-presence");
 assert.ok(
   lastNav.nodes.some((node) => node.textContent === "Continue: Pick a preset style"),
   "last speaker setup screen hands off to the visual direction path",
@@ -181,7 +264,14 @@ assert.equal(
   "embedded speaker setup nav routes middle next steps through the preview app hash",
 );
 
-const embeddedLastNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence", true);
+const embeddedEyeLineNav = renderNavFor("speaker-eye-line-coherence.html", "speaker-eye-line-coherence", true);
+assert.equal(
+  linkWithText(embeddedEyeLineNav.nodes, "Next: Off-camera speaker presence").href,
+  "../preview/app.html#off-camera-speaker-presence",
+  "embedded speaker setup nav routes eye-line next step through the preview app hash",
+);
+
+const embeddedLastNav = renderNavFor("off-camera-speaker-presence.html", "off-camera-speaker-presence", true);
 const embeddedHandoff = linkWithText(embeddedLastNav.nodes, "Continue: Pick a preset style");
 assert.equal(
   embeddedHandoff.href,

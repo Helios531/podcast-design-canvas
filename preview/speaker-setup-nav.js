@@ -11,6 +11,7 @@ const SPEAKER_SETUP_FLOW = [
   { id: "guest-profile-reuse", file: "guest-profile-reuse.html", label: "Guest profile reuse" },
   { id: "speaker-visual-match", file: "speaker-visual-match.html", label: "Speaker visual match" },
   { id: "speaker-eye-line-coherence", file: "speaker-eye-line-coherence.html", label: "Speaker eye-line coherence" },
+  { id: "off-camera-speaker-presence", file: "off-camera-speaker-presence.html", label: "Off-camera speaker presence" },
 ];
 
 const SPEAKER_SETUP_ENTRY = { file: "speaker-role-mapping.html?path=episode", label: "Speaker roles" };
@@ -19,6 +20,10 @@ const SPEAKER_SETUP_HANDOFF = { file: "preset-style-picker.html" };
 const PREVIEW_APP_SETUP_TARGETS = new Set([
   screenIdFromFile(SPEAKER_SETUP_ENTRY.file),
   screenIdFromFile(SPEAKER_SETUP_HANDOFF.file),
+  ...SPEAKER_SETUP_FLOW.map((step) => step.id),
+]);
+const SETUP_IN_PAGE_TARGETS = new Set([
+  screenIdFromFile(SPEAKER_SETUP_ENTRY.file),
   ...SPEAKER_SETUP_FLOW.map((step) => step.id),
 ]);
 
@@ -127,6 +132,40 @@ function setSetupScreenLink(link, file) {
   }
 
   link.href = hrefWithPath(file);
+}
+
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function shouldNormalizeSetupHref(href) {
+  return isLocalScreenHref(href) && SETUP_IN_PAGE_TARGETS.has(screenIdFromFile(href));
+}
+
+function normalizeSetupScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (shouldNormalizeSetupHref(href)) {
+    setSetupScreenLink(link, href);
+  }
+}
+
+function normalizeSetupScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach((link) => {
+    normalizeSetupScreenLink(link);
+  });
+}
+
+function normalizeSetupLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizeSetupScreenLink(link);
+  }
 }
 
 function renderSpeakerSetupNav() {
@@ -255,6 +294,8 @@ function renderSpeakerSetupNav() {
 
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
+  normalizeSetupScreenLinks(document);
+  document.addEventListener("click", normalizeSetupLinkClick);
 }
 
 if (document.readyState === "loading") {

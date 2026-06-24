@@ -60,6 +60,34 @@ assertCanonicalPathMerge(
   "speaker-role-mapping.html?path=episode&draft=roles",
 );
 
+assertCanonicalPathMerge(
+  "reuse-nav.js",
+  "?path=reuse",
+  "show-segment-system.html?path=episode&draft=segments",
+  "show-segment-system.html?path=reuse&draft=segments",
+);
+
+assertCanonicalPathMerge(
+  "style-nav.js",
+  "?path=style",
+  "preset-style-picker.html?path=episode&draft=preset",
+  "preset-style-picker.html?path=style&draft=preset",
+);
+
+assertCanonicalPathMerge(
+  "visuals-nav.js",
+  "?path=episode",
+  "show-segment-system.html?path=reuse&draft=segments",
+  "show-segment-system.html?path=episode&draft=segments",
+);
+
+assertCanonicalPathMerge(
+  "cleanup-nav.js",
+  "?path=publish",
+  "transcript-glossary.html?path=episode&draft=terms",
+  "transcript-glossary.html?path=publish&draft=terms",
+);
+
 const ingestSource = fs.readFileSync(path.join(previewDir, "ingest-nav.js"), "utf8");
 function ingestHrefWithPathFor(file, search) {
   const window = { location: { pathname: "/prototype/episode-readiness.html", search } };
@@ -107,4 +135,128 @@ assert.equal(
   "speaker setup nav preserves unrelated flags and hash segments when merging path context",
 );
 
-console.log("nav query merge: ingest, publish, and speaker setup path merges are canonical and non-ambiguous");
+const reuseSource = fs.readFileSync(path.join(previewDir, "reuse-nav.js"), "utf8");
+function reuseHrefWithPathFor(file, search) {
+  const window = { location: { pathname: "/prototype/show-template-adaptation.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${reuseSource}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+const reuseWithHash = reuseHrefWithPathFor(
+  "intro-outro-builder.html?draft=intro#review",
+  "?path=episode",
+);
+assert.equal(
+  reuseWithHash,
+  "intro-outro-builder.html?draft=intro&path=episode#review",
+  "reuse nav preserves unrelated flags and hash segments when merging path context",
+);
+
+const styleSource = fs.readFileSync(path.join(previewDir, "style-nav.js"), "utf8");
+function styleHrefWithPathFor(file, search) {
+  const window = { location: { pathname: "/prototype/layout-safe-areas.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${styleSource}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+const styleWithHash = styleHrefWithPathFor(
+  "contextual-broll-moments.html?from=style#moment",
+  "?path=episode",
+);
+assert.equal(
+  styleWithHash,
+  "contextual-broll-moments.html?from=style&path=episode#moment",
+  "style nav preserves from=style and hash segments when merging path context",
+);
+
+const visualsSource = fs.readFileSync(path.join(previewDir, "visuals-nav.js"), "utf8");
+function visualsHrefWithPathFor(file, search) {
+  const window = { location: { pathname: "/prototype/sensitive-moment-review.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${visualsSource}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+const visualsWithHash = visualsHrefWithPathFor(
+  "on-screen-correction-note.html?from=cleanup#note",
+  "?path=episode",
+);
+assert.equal(
+  visualsWithHash,
+  "on-screen-correction-note.html?from=cleanup&path=episode#note",
+  "visuals nav preserves from=cleanup and hash segments when merging path context",
+);
+
+const cleanupSource = fs.readFileSync(path.join(previewDir, "cleanup-nav.js"), "utf8");
+function cleanupHrefWithPathFor(file, search) {
+  const window = { location: { pathname: "/prototype/on-screen-correction-note.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${cleanupSource}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+function cleanupFlowContextFor(file, search) {
+  const window = { location: { pathname: "/prototype/transcript-glossary.html", search } };
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window,
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${cleanupSource}\nglobalThis.result = withCleanupFlowContext(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
+const cleanupWithHash = cleanupHrefWithPathFor(
+  "contextual-broll-moments.html?from=cleanup#moment",
+  "?path=publish",
+);
+assert.equal(
+  cleanupWithHash,
+  "contextual-broll-moments.html?from=cleanup&path=publish#moment",
+  "cleanup nav preserves from=cleanup and hash segments when merging path context",
+);
+
+const cleanupFlowWithHash = cleanupFlowContextFor(
+  "transcript-glossary.html?draft=terms#review",
+  "?path=publish&from=cleanup",
+);
+assert.equal(
+  cleanupFlowWithHash,
+  "transcript-glossary.html?draft=terms&from=cleanup&path=publish#review",
+  "cleanup nav preserves unrelated flags and hash segments when merging cleanup flow context",
+);
+
+console.log("nav query merge: ingest, publish, speaker setup, reuse, style, visuals, and cleanup path merges are canonical and non-ambiguous");

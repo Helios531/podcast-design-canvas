@@ -17,6 +17,7 @@ const PUBLISH_FLOW = [
   { id: "show-notes-assembly", file: "show-notes-assembly.html", label: "Show notes assembly" },
   { id: "episode-metadata-publishing", file: "episode-metadata-publishing.html", label: "Episode metadata publishing" },
   { id: "export-package-handoff", file: "export-package-handoff.html", label: "Export package handoff" },
+  { id: "clip-candidate-review", file: "clip-candidate-review.html", label: "Clip candidate review" },
   { id: "client-review-copy-flow", file: "client-review-copy-flow.html", label: "Client review copy" },
   { id: "publish-checklist", file: "publish-checklist.html", label: "Publish checklist" },
 ];
@@ -144,6 +145,40 @@ function setPublishScreenLink(link, file) {
   link.href = hrefWithPath(file);
 }
 
+function isLocalScreenHref(href) {
+  return Boolean(href) && !href.startsWith("#") && !href.startsWith("//") && !/^[a-z][a-z0-9+.-]*:/i.test(href);
+}
+
+function shouldNormalizePublishHref(href) {
+  return isLocalScreenHref(href) && isPreviewAppPublishTarget(href);
+}
+
+function normalizePublishScreenLink(link) {
+  const href = link.getAttribute("href") || "";
+  if (shouldNormalizePublishHref(href)) {
+    setPublishScreenLink(link, href);
+  }
+}
+
+function normalizePublishScreenLinks(root) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return;
+  }
+
+  root.querySelectorAll("a[href]").forEach((link) => {
+    normalizePublishScreenLink(link);
+  });
+}
+
+function normalizePublishLinkClick(event) {
+  const link = event.target && typeof event.target.closest === "function"
+    ? event.target.closest("a[href]")
+    : null;
+  if (link) {
+    normalizePublishScreenLink(link);
+  }
+}
+
 function renderPublishNav() {
   if (document.querySelector(".publish-nav")) {
     return;
@@ -266,6 +301,8 @@ function renderPublishNav() {
 
   nav.appendChild(wrap);
   document.body.insertBefore(nav, document.body.firstChild);
+  normalizePublishScreenLinks(document);
+  document.addEventListener("click", normalizePublishLinkClick);
 }
 
 if (document.readyState === "loading") {
