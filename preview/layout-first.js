@@ -233,7 +233,9 @@
       zones.forEach((zone) => {
         const isVisible = visible.has(zone.dataset.slot);
         zone.classList.toggle("is-hidden", !isVisible);
-        clearZone(zone);
+        if (!isVisible) {
+          clearZone(zone);
+        }
       });
 
       layoutButtons.forEach((button) => {
