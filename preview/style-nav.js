@@ -90,9 +90,33 @@ function pathQuerySuffix() {
   return "";
 }
 
+function mergeRouteSearch(file, overrides = {}) {
+  const raw = file || "";
+  const hashIndex = raw.indexOf("#");
+  const pathPart = hashIndex === -1 ? raw : raw.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : raw.slice(hashIndex);
+  const qIndex = pathPart.indexOf("?");
+  const base = qIndex === -1 ? pathPart : pathPart.slice(0, qIndex);
+  const params = new URLSearchParams(qIndex === -1 ? "" : pathPart.slice(qIndex + 1));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === null || value === undefined) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  const search = params.toString();
+  return `${base}${search ? `?${search}` : ""}${hash}`;
+}
+
 function hrefWithPath(file) {
-  const suffix = pathQuerySuffix();
-  return suffix ? `${file}${suffix}` : file;
+  const path = new URLSearchParams(window.location.search).get("path");
+  if (path !== "episode" && path !== "style") {
+    return file;
+  }
+  return mergeRouteSearch(file, { path });
 }
 
 function setStyleScreenLink(link, file) {

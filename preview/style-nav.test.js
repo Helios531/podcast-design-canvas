@@ -132,6 +132,19 @@ function routeSearchFor(file) {
   return sandbox.result;
 }
 
+function hrefWithPathFor(file, search) {
+  const sandbox = {
+    document: { readyState: "loading", addEventListener() {} },
+    window: makeWindow("canvas-layer-controls.html", false, search),
+    URLSearchParams,
+  };
+  vm.runInNewContext(
+    `${navScript}\nglobalThis.result = hrefWithPath(${JSON.stringify(file)});`,
+    sandbox,
+  );
+  return sandbox.result;
+}
+
 assert.equal(
   routeSearchFor("contextual-broll-moments.html?moment=42&from=style"),
   "?from=style",
@@ -156,6 +169,16 @@ assert.ok(
 assert.ok(
   lastNav.nodes.some((node) => node.href === "contextual-broll-moments.html?from=style"),
   "last visual direction screen links to contextual b-roll moments",
+);
+assert.equal(
+  hrefWithPathFor("contextual-broll-moments.html?from=style", "?path=episode"),
+  "contextual-broll-moments.html?from=style&path=episode",
+  "style nav merges episode path context onto the contextual visuals handoff without duplicating ?",
+);
+assert.equal(
+  hrefWithPathFor("contextual-broll-moments.html?from=style#review", "?path=style"),
+  "contextual-broll-moments.html?from=style&path=style#review",
+  "style nav preserves hash fragments when adding style-path context to the visuals handoff",
 );
 
 const embeddedFirstNav = renderNavFor("preset-style-picker.html", "preset-style-picker", true);
@@ -224,6 +247,12 @@ const noPathNav = renderNavFor("layout-safe-areas.html", "layout-safe-areas", fa
 assert.ok(
   !linkWithText(noPathNav.nodes, "Previous: Preset pacing").href.includes("?path="),
   "style nav adds no path suffix when there is no path context",
+);
+const stylePathLastNav = renderNavFor("canvas-layer-controls.html", "canvas-layer-controls", false, "?path=episode");
+assert.equal(
+  linkWithText(stylePathLastNav.nodes, "Continue: Contextual b-roll moments").href,
+  "contextual-broll-moments.html?from=style&path=episode",
+  "style nav keeps episode path context on the contextual visuals handoff without corrupting the query string",
 );
 
 console.log("style nav: visual direction screens connected back to the preview shell");
