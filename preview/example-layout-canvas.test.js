@@ -15,7 +15,7 @@ assert.match(html, /Host track · Dana Brooks/, "track tray includes a concrete 
 assert.match(html, /Guest track · Marcus Lee/, "track tray includes a concrete guest track");
 assert.match(html, /B-roll clip · Product demo cutaway/, "track tray includes a concrete b-roll clip");
 assert.ok((html.match(/draggable="true"/g) || []).length >= 3, "example canvas exposes draggable track chips");
-assert.match(html, /Reset example canvas/, "example canvas includes a reset action");
+assert.match(html, /Reset layout/, "example canvas includes a reset action");
 
 const script = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/);
 assert.ok(script, "preview shell exposes example canvas behavior script");
