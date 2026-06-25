@@ -46,6 +46,7 @@ function load() {
 
 const M = load();
 assert.ok(typeof M.evaluate === "function", "prototype exports evaluate()");
+assert.ok(typeof M.reorderLayers === "function", "prototype exports reorderLayers()");
 
 function titles(list) {
   return M.evaluate(list).checks.map((c) => c.title);
@@ -102,6 +103,38 @@ const clean = M.evaluate([
   { id: "g", type: "brand", visible: true, locked: true },
 ]);
 assert.strictEqual(clean.overall, "ready", "a clean, locked-brand layout is ready to save");
+
+// Locked layers cannot move, and unlocked neighbors cannot displace them.
+const lockedBackground = [
+  { id: "brand", type: "brand", visible: true, locked: false },
+  { id: "background", type: "background", visible: true, locked: true },
+  { id: "speaker", type: "speaker", visible: true, locked: false },
+];
+assert.deepStrictEqual(
+  M.reorderLayers(lockedBackground, 1, -1).map((layer) => layer.id),
+  ["brand", "background", "speaker"],
+  "a locked layer does not move when its own reorder control is used",
+);
+assert.deepStrictEqual(
+  M.reorderLayers(lockedBackground, 0, 1).map((layer) => layer.id),
+  ["brand", "background", "speaker"],
+  "an unlocked neighbor cannot displace a locked layer into a new position",
+);
+assert.strictEqual(
+  M.canMoveLayer(lockedBackground, 1, -1),
+  false,
+  "the UI can disable reordering a locked layer",
+);
+assert.strictEqual(
+  M.canMoveLayer(lockedBackground, 0, 1),
+  false,
+  "the UI can disable reordering into a locked layer's slot",
+);
+assert.deepStrictEqual(
+  M.reorderLayers(lockedBackground, 2, -1).map((layer) => layer.id),
+  ["brand", "background", "speaker"],
+  "the other side of a locked layer also refuses displacement",
+);
 
 // The saved-layout signature must change when EITHER the layers or the "adapts when
 // reused" choices change, so saving then toggling a reuse option marks it unsaved.
