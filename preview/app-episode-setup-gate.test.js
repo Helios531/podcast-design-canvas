@@ -127,6 +127,18 @@ assert.equal(
   "disabled rail links loop back to the gated setup start while intake is incomplete",
 );
 
+const directBypass = runApp("#episode-readiness");
+assert.equal(
+  directBypass.roots["#screen"].src,
+  "../prototype/episode-setup-intake.html",
+  "direct hashes to later screens still land on the guided setup intake while setup is incomplete",
+);
+assert.equal(
+  directBypass.roots["#crumb-label"].textContent,
+  "Episode Setup Intake",
+  "the shell labels the gated screen instead of the requested later step while intake is incomplete",
+);
+
 blocked.listeners.message({ data: { type: "pdc-episode-setup-state", complete: true } });
 assert.equal(
   readinessRailLink.attributes["aria-disabled"],

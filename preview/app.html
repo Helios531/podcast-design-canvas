@@ -405,7 +405,7 @@
         const raw = (window.location.hash || "").replace(/^#/, "");
         const [screenHash, rawSearch = ""] = raw.split("?");
         const screen = KNOWN.has(screenHash) ? screenHash : firstScreen;
-        return { screen, search: routeSearchFor(screen, rawSearch) };
+        return { screen, search: routeSearchFor(screen, rawSearch), rawSearch };
       }
 
       function stepTarget(screen, index, offset, search) {
@@ -413,17 +413,20 @@
       }
 
       function route() {
-        const { screen, search } = currentRoute();
-        currentScreen = screen;
-        currentSearch = search;
+        const { screen, search, rawSearch } = currentRoute();
+        const gatedScreen = !episodeSetupComplete && !rawSearch && screen !== firstScreen
+          ? firstScreen
+          : screen;
+        currentScreen = gatedScreen;
+        currentSearch = gatedScreen === screen ? search : "";
         // Only ever load a known screen file — never an arbitrary hash value.
-        const nextSrc = `../prototype/${screen}.html${search}`;
+        const nextSrc = `../prototype/${gatedScreen}.html${currentSearch}`;
         const routeCache = frame.dataset || (frame.dataset = {});
         if (routeCache.routeSrc !== nextSrc) {
           frame.src = nextSrc;
           routeCache.routeSrc = nextSrc;
         }
-        const label = titleCase(screen);
+        const label = titleCase(gatedScreen);
         crumbLabel.textContent = label;
         frame.title = `${label} screen`;
         openDirect.href = nextSrc;
@@ -435,7 +438,7 @@
           } else {
             link.removeAttribute("aria-disabled");
           }
-          if (name === screen) {
+          if (name === gatedScreen) {
             link.setAttribute("aria-current", "page");
           } else {
             link.removeAttribute("aria-current");
@@ -443,13 +446,13 @@
         }
 
         // Step through the product in workflow order.
-        const index = ORDER.indexOf(screen);
+        const index = ORDER.indexOf(gatedScreen);
         stepCount.textContent = `Screen ${index + 1} of ${ORDER.length}`;
-        setStep(prevStep, stepTarget(screen, index, -1, search));
-        setStep(nextStep, gatedStepTarget(screen, index, 1, search));
+        setStep(prevStep, stepTarget(gatedScreen, index, -1, currentSearch));
+        setStep(nextStep, gatedStepTarget(gatedScreen, index, 1, currentSearch));
 
         // Record progress through the product and reflect it in the rail.
-        markVisited(screen);
+        markVisited(gatedScreen);
         renderProgress();
       }
 

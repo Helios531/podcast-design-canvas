@@ -17,7 +17,7 @@ const app = fs.readFileSync(path.join(__dirname, "app.html"), "utf8");
 assert.match(app, /<iframe id="screen"/, "app hosts screens in an iframe");
 assert.ok(app.includes('window.addEventListener("hashchange"'), "app routes on URL hash changes");
 assert.ok(app.includes("KNOWN.has(screenHash)"), "app only loads a known screen from the hash (no arbitrary URL)");
-assert.ok(app.includes('const nextSrc = `../prototype/${screen}.html${search}`'), "the shell builds the routed prototype src");
+assert.ok(app.includes('const nextSrc = `../prototype/${gatedScreen}.html${currentSearch}`'), "the shell builds the routed prototype src");
 assert.ok(app.includes("routeCache.routeSrc !== nextSrc"), "the shell avoids reloading the iframe when the route has not changed");
 assert.ok(app.includes("function currentRoute"), "app normalizes route hashes before loading the frame");
 assert.ok(app.includes("function routeSearchFor"), "app whitelists supported route query context");
@@ -51,7 +51,7 @@ for (const proto of all) {
 
 // The app steps through the product in workflow order (one guided product, prev/next).
 assert.ok(app.includes("const ORDER = []"), "app builds a workflow order for stepping");
-assert.ok(app.includes("ORDER.indexOf(screen)"), "app locates the current screen in the workflow order");
+assert.ok(app.includes("ORDER.indexOf(gatedScreen)"), "app locates the current screen in the workflow order");
 assert.ok(app.includes("Screen ${index + 1} of ${ORDER.length}"), "app shows progress through the workflow");
 assert.match(app, /id="prev-step"/, "app has a previous-screen control");
 assert.match(app, /id="next-step"/, "app has a next-screen control");
