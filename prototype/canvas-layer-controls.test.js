@@ -46,6 +46,7 @@ function load() {
 
 const M = load();
 assert.ok(typeof M.evaluate === "function", "prototype exports evaluate()");
+assert.ok(typeof M.reorderLayers === "function", "prototype exports reorderLayers()");
 
 function titles(list) {
   return M.evaluate(list).checks.map((c) => c.title);
@@ -102,6 +103,42 @@ const clean = M.evaluate([
   { id: "g", type: "brand", visible: true, locked: true },
 ]);
 assert.strictEqual(clean.overall, "ready", "a clean, locked-brand layout is ready to save");
+
+// Locked layers cannot move, and unlocked neighbours cannot displace them.
+const lockedSample = [
+  { id: "captions", type: "captions", visible: true, locked: false },
+  { id: "brand", type: "brand", visible: true, locked: false },
+  { id: "background", type: "background", visible: true, locked: true },
+];
+assert.strictEqual(
+  M.reorderLayers(lockedSample, 2, -1),
+  lockedSample,
+  "moving a locked layer is refused",
+);
+assert.strictEqual(
+  M.reorderLayers(lockedSample, 1, 1),
+  lockedSample,
+  "moving an unlocked layer into a locked neighbour is refused",
+);
+
+// Permitted unlocked reorders still work and keep the input list immutable.
+const unlockedSample = [
+  { id: "captions", type: "captions", visible: true, locked: false },
+  { id: "speaker", type: "speaker", visible: true, locked: false },
+  { id: "brand", type: "brand", visible: true, locked: false },
+];
+const reordered = M.reorderLayers(unlockedSample, 1, -1);
+assert.notStrictEqual(reordered, unlockedSample, "allowed reorders return a new list");
+assert.deepStrictEqual(
+  reordered.map((layer) => layer.id),
+  ["speaker", "captions", "brand"],
+  "allowed reorders swap the requested neighbour",
+);
+assert.deepStrictEqual(
+  unlockedSample.map((layer) => layer.id),
+  ["captions", "speaker", "brand"],
+  "reorderLayers does not mutate its input list",
+);
 
 // The saved-layout signature must change when EITHER the layers or the "adapts when
 // reused" choices change, so saving then toggling a reuse option marks it unsaved.
